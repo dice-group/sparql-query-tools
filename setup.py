@@ -12,6 +12,7 @@ setup(
     version='0.1.0',
     description='Tools to get infos about SPARQL queries.',
     long_description=readme,
+    long_description_content_type='text/markdown',
     author='Alexander Bigerl',
     author_email='info@dice-research.org',
     url='https://github.com/dice-group/sparql-query-tools',
