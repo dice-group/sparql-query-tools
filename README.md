@@ -6,4 +6,18 @@ More will be integrated later so that the plural in the name will make sense. ðŸ
 
 ## Tools
 
-- `sparql_result_analysis`: queries a triple store and provides info and metrics on the results
+- `sparql_result_analysis`: Queries a triple store and provides info and metrics on the results. Creates a folder with the resulting json files and a CSV file containing the infos and metrics about the querying and results. 
+
+## Install
+
+from git repoitory:
+```
+git clone https://github.com/dice-group/sparql-query-tools.git
+cd sparql-query-tools
+pip install .
+```
+
+or with pip from PyPI:
+```
+pip install sparql-query-tools
+```
