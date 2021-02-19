@@ -66,7 +66,8 @@ def cli(url: URLParseResult, queries: Path, include: Optional[List[int]], exclud
             http_succeeded = download_result.status == 200
             parsing_succeeded: bool = parse_result.success
             if not save:
-                download_result.path.unlink(missing_ok=True)
+                if download_result.path.exists():
+                    download_result.path.unlink()
 
             row = OutputCSVRows(
                 format="HTTP",
