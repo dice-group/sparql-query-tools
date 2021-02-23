@@ -33,7 +33,7 @@ def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: P
     with open(file, 'wb') as f:
         c = pycurl.Curl()
         c.setopt(c.URL, query_url)
-        c.setopt(pycurl.HTTPHEADER, ["Content-Type:application/sparql-results+json"])
+        c.setopt(pycurl.HTTPHEADER, ["Accept:application/sparql-results+json"])
         c.setopt(pycurl.HTTPGET, 1)
         c.setopt(c.WRITEDATA, f)
         try:
