@@ -34,5 +34,10 @@ def parse_queries_file(queries_file: Path,
     # sort
     query_ids = sorted(query_ids)
     import operator
+    if not query_ids:
+        return [], []
     queries = operator.itemgetter(*query_ids)(queries)
-    return query_ids, queries
+    if len(query_ids) == 1:
+        return query_ids, [queries]
+    else:
+        return query_ids, queries

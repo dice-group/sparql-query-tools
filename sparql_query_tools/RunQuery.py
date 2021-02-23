@@ -20,6 +20,7 @@ class QueryResult(NamedTuple):
 def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: Path) -> QueryResult:
     from urllib.parse import parse_qs, urlencode
     query_params: dict = parse_qs(endpoint.query)
+    query_params = {k: v[0] if type(v) is list and len(v) == 1 else v for k, v in query_params.items()}
     query_params["query"] = query
     query_url = URLParseResult(scheme=endpoint.scheme,
                                netloc=endpoint.netloc,
@@ -27,6 +28,7 @@ def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: P
                                params=endpoint.params,
                                query=urlencode(query_params),
                                fragment=endpoint.fragment).geturl()
+    print(query_url)
     file: Path = output_dir.joinpath('result_q{:05d}.json'.format(query_id))
     status = -1
     duration = time.time()
