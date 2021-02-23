@@ -8,7 +8,7 @@ with open('LICENSE.md') as f:
 
 setup(
     name='sparql-query-tools',
-    version='0.1.5',
+    version='0.1.6',
     description="tools to run SPARQL queries and get metrics.",
     author='Alexander Bigerl',
     author_email='info@dice-research.org',

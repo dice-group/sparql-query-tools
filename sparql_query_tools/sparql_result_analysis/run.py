@@ -106,7 +106,7 @@ def cli(url: URLParseResult, queries: Path, include: Optional[List[int]], exclud
                 parsingErrorMessage=parse_result.error_message if http_succeeded else None,
             )
             writer.writerow(row._asdict())
-        if not save:
+        if not any(result_files_dir.iterdir()):
             result_files_dir.rmdir()
 
 
