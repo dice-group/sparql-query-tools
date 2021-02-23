@@ -44,15 +44,32 @@ class OutputCSVRows(NamedTuple):
 @click.option('--storename', '-sn', required=False, type=str, default=None, help='Name of the store being benched.')
 @click.option('--save/--dont-save', ' /-d', required=False, type=bool, default=True,
               help="Don't write the results to disk.")
+@click.option('--save-only-error', '-sor', is_flag=True, required=False, type=bool, default=False,
+              help="Save the sparql result file only in case of an error.")
+@click.option('--output', '-o', required=False, type=str, default=None,
+              help='Custom location for output csv file.'
+                   'If set the result files are written in a directory next to the csv file with the same name.')
 def cli(url: URLParseResult, queries: Path, include: Optional[List[int]], exclude: Optional[List[int]],
-        storename: Optional[str], datasetname: Optional[str], save=False):
-    output_name: str = "HTTP_{}_{}_{}".format(
-        datasetname if datasetname is not None else "unspecified-dataset",
-        storename if storename is not None else "unspecified-store",
-        datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-    output_dir = Path.cwd().joinpath(output_name)
+        storename: Optional[str], datasetname: Optional[str], save=False, save_only_error=False, output=None):
+    if output is not None:
+        if Path(output).suffix != ".csv":
+            click.echo("Output file extension must be .csv")
+            exit(1)
+        click.echo("Output file is set to {}".format(str(Path(output).absolute())))
+
+    if output is None:
+        output_name: str = "HTTP_{}_{}_{}".format(
+            datasetname if datasetname is not None else "unspecified-dataset",
+            storename if storename is not None else "unspecified-store",
+            datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        output_dir = Path.cwd().joinpath(output_name)
+        result_files_dir = output_dir.joinpath("result_files")
+    else:
+        output_name: str = Path(output).stem
+        output_dir = Path(output).parent
+        result_files_dir = output_dir.joinpath(Path(output_name).name)
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    result_files_dir = output_dir.joinpath("result_files")
     result_files_dir.mkdir(parents=True, exist_ok=True)
 
     query_ids, queries = parse_queries_file(queries, include, exclude)
@@ -65,7 +82,7 @@ def cli(url: URLParseResult, queries: Path, include: Optional[List[int]], exclud
         for query_id, query, download_result, parse_result in run_queries(query_ids, queries, url, result_files_dir):
             http_succeeded = download_result.status == 200
             parsing_succeeded: bool = parse_result.success
-            if not save:
+            if not save or (save_only_error and http_succeeded and parsing_succeeded):
                 if download_result.path.exists():
                     download_result.path.unlink()
 
