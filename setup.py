@@ -20,6 +20,7 @@ setup(
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)", ],
     install_requires=[
         "rdflib>=5.0.0",
+        "requests>=2.25.1", # dependency of rdflib
         "click>=7.1.2",
         "pycurl>=7.43.0.6"
     ],
