@@ -17,7 +17,8 @@ class QueryResult(NamedTuple):
     error_message: Optional[str]
 
 
-def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: Optional[Path] = None) -> QueryResult:
+def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: Optional[Path] = None,
+              verbose: bool = False) -> QueryResult:
     from urllib.parse import parse_qs, urlencode
     query_params: dict = parse_qs(endpoint.query)
     query_params = {k: v[0] if type(v) is list and len(v) == 1 else v for k, v in query_params.items()}
@@ -28,7 +29,8 @@ def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: O
                                params=endpoint.params,
                                query=urlencode(query_params),
                                fragment=endpoint.fragment).geturl()
-    click.echo(f"Request URL: {query_url}")
+    if verbose:
+        click.echo(f"Request URL: {query_url}")
     file: Optional[Path] = output_dir.joinpath(f'result_q{query_id:05d}.json') \
         if output_dir is not None \
         else None
@@ -84,7 +86,7 @@ def run_queries(query_ids: List[int], queries: List[str], endpoint, result_files
         if verbose:
             click.echo("\nQuery: {}\n".format(prettify_query(query)) +
                        f"Query ID: {query_id}")
-        download_result = run_query(endpoint, query, query_id, result_files_dir)
+        download_result = run_query(endpoint, query, query_id, result_files_dir, verbose=verbose)
 
         file, file_size_bytes, retrieval_duration, status, error_message = download_result
         if verbose:
@@ -96,8 +98,9 @@ def run_queries(query_ids: List[int], queries: List[str], endpoint, result_files
                 parse_result = parse_sparql_json_result(file)
                 no_of_variables, no_of_solutions, no_of_var_bindings, parse_duration, parse_success, _ = parse_result
                 if parse_success:
-                    click.echo(
-                        f"""Parsing duration: {parse_duration} s
+                    if verbose:
+                        click.echo(
+                            f"""Parsing duration: {parse_duration} s
 Number of variables: {no_of_variables}
 Number of solutions: {no_of_solutions}
 Number of variable bindings: {no_of_var_bindings}""")
