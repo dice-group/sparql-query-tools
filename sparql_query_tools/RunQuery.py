@@ -32,7 +32,7 @@ def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: O
     file: Optional[Path] = output_dir.joinpath(f'result_q{query_id:05d}.json') \
         if output_dir is not None \
         else None
-    status = -1
+    status = None
     duration = time.time()
     c = pycurl.Curl()
     c.setopt(c.URL, query_url)
@@ -52,9 +52,11 @@ def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: O
                 c.perform()
     except pycurl.error as e:
         status = c.getinfo(c.RESPONSE_CODE)
+        if status == 0:
+            status = None
         c.close()
         duration = time.time() - duration
-        return QueryResult(file, None, duration, status, str(e))
+        return QueryResult(file, None, duration, status, " | ".join(str(i) for i in e.args))
     status = c.getinfo(c.RESPONSE_CODE)
     c.close()
     duration = time.time() - duration  #
@@ -63,7 +65,7 @@ def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: O
         if file is not None \
         else len(buffer.getvalue())
 
-    return QueryResult(file, file_size_bytes, duration, status, "")
+    return QueryResult(file, file_size_bytes, duration, status, None)
 
 
 def prettify_query(query: str) -> str:
@@ -89,16 +91,18 @@ def run_queries(query_ids: List[int], queries: List[str], endpoint, result_files
             click.echo("Retrieval duration: {} s\n"
                        "Result size: {} bytes".format(retrieval_duration, file_size_bytes))
             click.echo("{}".format(status))
-        if status == 200:
+        if status == 200 and error_message is None:
             if parse:
                 parse_result = parse_sparql_json_result(file)
                 no_of_variables, no_of_solutions, no_of_var_bindings, parse_duration, parse_success, _ = parse_result
                 if parse_success:
                     click.echo(
                         f"""Parsing duration: {parse_duration} s
-                        Number of variables: {no_of_variables}
-                        Number of solutions: {no_of_solutions}
-                        Number of variable bindings: {no_of_var_bindings}""")
+Number of variables: {no_of_variables}
+Number of solutions: {no_of_solutions}
+Number of variable bindings: {no_of_var_bindings}""")
                 yield query_id, query, download_result, parse_result
             else:
                 yield query_id, query, download_result, None
+        else:
+            yield query_id, query, download_result, None

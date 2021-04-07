@@ -89,7 +89,7 @@ def cli(url: URLParseResult, queries: Path, include: Optional[List[int]], exclud
             for result in run_queries(query_ids, queries, url, result_files_dir, parse=not dont_parse):
                 results.append(result)
                 query_id, query, download_result, parse_result = result
-                if download_result.status == 200 or (not dont_parse and parse_result.success):
+                if download_result.status == 200 or (download_result.status == 200 and not dont_parse and parse_result.success):
                     if download_result.path.exists():
                         download_result.path.unlink()
     else:
@@ -106,7 +106,7 @@ def cli(url: URLParseResult, queries: Path, include: Optional[List[int]], exclud
         writer = csv.DictWriter(csvfile, fieldnames=OutputCSVRows._fields)
         writer.writeheader()
         for query_id, query, download_result, parse_result in results:
-            http_succeeded = download_result.status == 200
+            http_succeeded = download_result.status == 200 and download_result.error_message is None
 
             row = OutputCSVRows(
                 format="HTTP",
