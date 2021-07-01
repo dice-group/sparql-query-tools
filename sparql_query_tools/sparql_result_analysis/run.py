@@ -49,13 +49,16 @@ class OutputCSVRows(NamedTuple):
               help="Save the sparql result file only in case of an error.")
 @click.option('--dont-parse', '-dp', is_flag=True, required=False, type=bool, default=False,
               help="Don't parse the result. HTTP Content-Length is still reported.")
+@click.option('--time-out', '-t', required=False, type=int, default=600000,
+              help="Timeout in milliseconds. Default is 10 minutes.")
 @click.option('--output', '-o', required=False, type=str, default=None,
               help='Custom location for output csv file.'
                    'If set the result files are written in a directory next to the csv file with the same name.')
 @click.option('--verbose', '-v', is_flag=True, required=False, type=bool, default=False, help='verbose logging')
 def cli(url: URLParseResult, queries: Path, include: Optional[List[int]], exclude: Optional[List[int]],
-        storename: Optional[str], datasetname: Optional[str], save=False, save_only_error=False, dont_parse=False,
-        output=None, verbose=False):
+        storename: Optional[str], datasetname: Optional[str], save: bool, save_only_error: bool, dont_parse: bool,
+        time_out: int,
+        output: Optional[str], verbose: bool):
     if output is not None:
         if Path(output).suffix != ".csv":
             click.echo("Output file extension must be .csv")
@@ -84,19 +87,20 @@ def cli(url: URLParseResult, queries: Path, include: Optional[List[int]], exclud
     results: List[Tuple[int, str, QueryResult, Optional[SparqlJsonResultStats]]] = list()
     if save:
         if not save_only_error:
-            results = [*run_queries(query_ids, queries, url, result_files_dir, parse=not dont_parse, verbose=verbose)]
+            results = [*run_queries(query_ids, queries, url, result_files_dir, parse=not dont_parse, timeout_ms=time_out, verbose=verbose)]
         else:
-            for result in run_queries(query_ids, queries, url, result_files_dir, parse=not dont_parse, verbose=verbose):
+            for result in run_queries(query_ids, queries, url, result_files_dir, parse=not dont_parse, timeout_ms=time_out, verbose=verbose):
                 results.append(result)
                 query_id, query, download_result, parse_result = result
-                if download_result.status == 200 or (download_result.status == 200 and not dont_parse and parse_result.success):
+                if download_result.status == 200 or (
+                        download_result.status == 200 and not dont_parse and parse_result.success):
                     if download_result.path.exists():
                         download_result.path.unlink()
     else:
         if dont_parse:
-            results = [*run_queries(query_ids, queries, url, None, parse=False, verbose=verbose)]
+            results = [*run_queries(query_ids, queries, url, None, parse=False, timeout_ms=time_out, verbose=verbose)]
         else:
-            for result in run_queries(query_ids, queries, url, result_files_dir, parse=True, verbose=verbose):
+            for result in run_queries(query_ids, queries, url, result_files_dir, parse=True, timeout_ms=time_out, verbose=verbose):
                 results.append(result)
                 query_id, query, download_result, parse_result = result
                 if download_result.path.exists():

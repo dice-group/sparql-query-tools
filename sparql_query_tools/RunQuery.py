@@ -17,7 +17,7 @@ class QueryResult(NamedTuple):
     error_message: Optional[str]
 
 
-def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: Optional[Path] = None,
+def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: Optional[Path] = None, timeout_ms: int = 600000,
               verbose: bool = False) -> QueryResult:
     from urllib.parse import parse_qs, urlencode
     query_params: dict = parse_qs(endpoint.query)
@@ -40,6 +40,7 @@ def run_query(endpoint: URLParseResult, query: str, query_id: int, output_dir: O
     c.setopt(c.URL, query_url)
     c.setopt(pycurl.HTTPHEADER, ["Accept:application/sparql-results+json"])
     c.setopt(pycurl.HTTPGET, 1)
+    c.setopt(pycurl.TIMEOUT_MS, timeout_ms)
 
     from io import BytesIO
     if file is None:
@@ -80,13 +81,13 @@ def prettify_query(query: str) -> str:
 
 
 def run_queries(query_ids: List[int], queries: List[str], endpoint, result_files_dir: Optional[Path],
-                parse: bool = True, verbose: bool = True) -> Iterator[Tuple[
+                parse: bool = True, timeout_ms: int = 600000, verbose: bool = True) -> Iterator[Tuple[
     int, str, QueryResult, Optional[SparqlJsonResultStats]]]:
     for query_id, query in zip(query_ids, queries):
         if verbose:
             click.echo("\nQuery: {}\n".format(prettify_query(query)) +
                        f"Query ID: {query_id}")
-        download_result = run_query(endpoint, query, query_id, result_files_dir, verbose=verbose)
+        download_result = run_query(endpoint, query, query_id, result_files_dir, timeout_ms=timeout_ms, verbose=verbose)
 
         file, file_size_bytes, retrieval_duration, status, error_message = download_result
         if verbose:
